@@ -1,0 +1,18 @@
+{
+    "os": "Windows-10-10.0.19041-SP0",
+    "python": "3.8.5",
+    "heartbeatAt": "2022-04-13T21:06:35.170984",
+    "startedAt": "2022-04-13T21:06:30.365971",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 3060 Ti",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "c:\\Users\\Andrew\\Documents\\Research\\MPIS\\Pytorch-UNet\\train.py",
+    "codePath": "train.py",
+    "host": "andrewhomepc",
+    "username": "Andrew",
+    "executable": "C:\\Users\\Andrew\\anaconda3\\python.exe"
+}

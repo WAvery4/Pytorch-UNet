@@ -6,3 +6,11 @@ checkpoints/
 *.jpg
 venv/
 .idea/
+*.vgm
+*.vgp
+*.preset
+*.vge
+*.raw
+*.xtekVolume
+*.avi
+*.jpg
