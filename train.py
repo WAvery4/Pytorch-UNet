@@ -16,8 +16,6 @@ from utils.dice_score import dice_loss
 from evaluate import evaluate
 from unet import UNet
 
-wandb.init(project="unet", entity="mpis-")
-
 dir_img = Path('./data/imgs/')
 dir_mask = Path('./data/masks/')
 dir_checkpoint = Path('./checkpoints/')
