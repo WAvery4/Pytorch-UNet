@@ -11,12 +11,13 @@ import albumentations as A
 
 
 class BasicDataset(Dataset):
-    def __init__(self, images_dir: str, masks_dir: str, scale: float = 1.0, mask_suffix: str = ''):
+    def __init__(self, images_dir: str, masks_dir: str, scale: float = 1.0, mask_suffix: str = '', augmentation = False):
         self.images_dir = Path(images_dir)
         self.masks_dir = Path(masks_dir)
         assert 0 < scale <= 1, 'Scale must be between 0 and 1'
         self.scale = scale
         self.mask_suffix = mask_suffix
+        self.augmentation = augmentation
 
         self.ids = [splitext(file)[0] for file in listdir(images_dir) if not file.startswith('.')]
         if not self.ids:
@@ -75,17 +76,15 @@ class BasicDataset(Dataset):
         mask = self.preprocess(mask, self.scale, is_mask=True)
 
         # Data augmentation
-        img = img.reshape(800, 800, 3)
-
-        transform = A.Compose([
-            A.HorizontalFlip(p=0.5)
-        ])
-
-        transformed = transform(image=img, mask=mask)
-        img = transformed['image']
-        mask = transformed['mask']
-
-        img = img.reshape(3, 800, 800)
+        if self.augmentation:
+            img = img.reshape(800, 800, 3)
+            transform = A.Compose([
+                A.HorizontalFlip(p=0.5)
+            ])
+            transformed = transform(image=img, mask=mask)
+            img = transformed['image']
+            mask = transformed['mask']
+            img = img.reshape(3, 800, 800)
 
         return {
             'image': torch.as_tensor(img.copy()).float().contiguous(),
@@ -94,5 +93,5 @@ class BasicDataset(Dataset):
 
 
 class CarvanaDataset(BasicDataset):
-    def __init__(self, images_dir, masks_dir, scale=1):
-        super().__init__(images_dir, masks_dir, scale, mask_suffix='_mask')
+    def __init__(self, images_dir, masks_dir, scale=1, augmentation = False):
+        super().__init__(images_dir, masks_dir, scale, mask_suffix='_mask', augmentation=augmentation)
