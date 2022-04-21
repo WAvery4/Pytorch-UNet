@@ -75,17 +75,6 @@ class BasicDataset(Dataset):
         img = self.preprocess(img, self.scale, is_mask=False)
         mask = self.preprocess(mask, self.scale, is_mask=True)
 
-        # Data augmentation
-        if self.augmentation:
-            img = img.reshape(800, 800, 3)
-            transform = A.Compose([
-                A.HorizontalFlip(p=0.5)
-            ])
-            transformed = transform(image=img, mask=mask)
-            img = transformed['image']
-            mask = transformed['mask']
-            img = img.reshape(3, 800, 800)
-
         return {
             'image': torch.as_tensor(img.copy()).float().contiguous(),
             'mask': torch.as_tensor(mask.copy()).long().contiguous()
