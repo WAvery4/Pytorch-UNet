@@ -10,6 +10,7 @@ import wandb
 from torch import optim
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
+import segmentation_models_pytorch as smp
 
 from utils.data_loading import BasicDataset, CarvanaDataset
 from utils.dice_score import dice_loss
@@ -29,7 +30,8 @@ def train_net(net,
               val_percent: float = 0.1,
               save_checkpoint: bool = True,
               img_scale: float = 0.5,
-              amp: bool = False):
+              amp: bool = False,
+              pretrained: bool = False):
     # 1. Create dataset
     try:
         dataset = CarvanaDataset(dir_img, dir_mask, img_scale)
@@ -80,17 +82,18 @@ def train_net(net,
                 images = batch['image']
                 true_masks = batch['mask']
 
-                assert images.shape[1] == net.n_channels, \
-                    f'Network has been defined with {net.n_channels} input channels, ' \
-                    f'but loaded images have {images.shape[1]} channels. Please check that ' \
-                    'the images are loaded correctly.'
-
                 images = images.to(device=device, dtype=torch.float32)
                 true_masks = true_masks.to(device=device, dtype=torch.long)
 
                 with torch.cuda.amp.autocast(enabled=amp):
                     masks_pred = net(images)
-                    loss = criterion(masks_pred, true_masks) \
+                    if pretrained:
+                        loss = criterion(masks_pred, true_masks) \
+                           + dice_loss(F.softmax(masks_pred, dim=1).float(),
+                                       F.one_hot(true_masks, 2).permute(0, 3, 1, 2).float(),
+                                       multiclass=True)
+                    else:
+                        loss = criterion(masks_pred, true_masks) \
                            + dice_loss(F.softmax(masks_pred, dim=1).float(),
                                        F.one_hot(true_masks, net.n_classes).permute(0, 3, 1, 2).float(),
                                        multiclass=True)
@@ -115,27 +118,36 @@ def train_net(net,
                 if division_step > 0:
                     if global_step % division_step == 0:
                         histograms = {}
-                        for tag, value in net.named_parameters():
-                            tag = tag.replace('/', '.')
-                            histograms['Weights/' + tag] = wandb.Histogram(value.data.cpu())
-                            histograms['Gradients/' + tag] = wandb.Histogram(value.grad.data.cpu())
+                        if not pretrained:
+                            for tag, value in net.named_parameters():
+                                tag = tag.replace('/', '.')
+                                histograms['Weights/' + tag] = wandb.Histogram(value.data.cpu())
+                                histograms['Gradients/' + tag] = wandb.Histogram(value.grad.data.cpu())
 
-                        val_score = evaluate(net, val_loader, device)
+                        val_score = evaluate(net, val_loader, device, pretrained)
                         scheduler.step(val_score)
 
                         logging.info('Validation Dice score: {}'.format(val_score))
-                        experiment.log({
-                            'learning rate': optimizer.param_groups[0]['lr'],
-                            'validation Dice': val_score,
-                            'images': wandb.Image(images[0].cpu()),
-                            'masks': {
-                                'true': wandb.Image(true_masks[0].float().cpu()),
-                                'pred': wandb.Image(torch.softmax(masks_pred, dim=1).argmax(dim=1)[0].float().cpu()),
-                            },
-                            'step': global_step,
-                            'epoch': epoch,
-                            **histograms
-                        })
+                        if pretrained:
+                            experiment.log({
+                                'learning rate': optimizer.param_groups[0]['lr'],
+                                'validation Dice': val_score,
+                                'step': global_step,
+                                'epoch': epoch,
+                            })
+                        else:
+                            experiment.log({
+                                'learning rate': optimizer.param_groups[0]['lr'],
+                                'validation Dice': val_score,
+                                'images': wandb.Image(images[0].cpu()),
+                                'masks': {
+                                    'true': wandb.Image(true_masks[0].float().cpu()),
+                                    'pred': wandb.Image(torch.softmax(masks_pred, dim=1).argmax(dim=1)[0].float().cpu()),
+                                },
+                                'step': global_step,
+                                'epoch': epoch,
+                                **histograms
+                            })
 
         if save_checkpoint:
             Path(dir_checkpoint).mkdir(parents=True, exist_ok=True)
@@ -155,6 +167,7 @@ def get_args():
                         help='Percent of the data that is used as validation (0-100)')
     parser.add_argument('--amp', action='store_true', default=False, help='Use mixed precision')
     parser.add_argument('--bilinear', action='store_true', default=False, help='Use bilinear upsampling')
+    parser.add_argument('--pretrained', action='store_true', default=False, help='Use a pretrained encoder')
 
     return parser.parse_args()
 
@@ -169,12 +182,17 @@ if __name__ == '__main__':
     # Change here to adapt to your data
     # n_channels=3 for RGB images
     # n_classes is the number of probabilities you want to get per pixel
-    net = UNet(n_channels=3, n_classes=2, bilinear=args.bilinear)
-
-    logging.info(f'Network:\n'
-                 f'\t{net.n_channels} input channels\n'
-                 f'\t{net.n_classes} output channels (classes)\n'
-                 f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
+    if args.pretrained:
+        net = smp.Unet(encoder_name='efficientnet-b4', encoder_weights='imagenet', in_channels=3, classes=2)
+        logging.info(f'Network:\n'
+                f'\t{3} input channels\n'
+                f'\t{1} output channels (classes)\n')
+    else:
+        net = UNet(n_channels=3, n_classes=2, bilinear=args.bilinear)
+        logging.info(f'Network:\n'
+                f'\t{net.n_channels} input channels\n'
+                f'\t{net.n_classes} output channels (classes)\n'
+                f'\t{"Bilinear" if net.bilinear else "Transposed conv"} upscaling')
 
     if args.load:
         net.load_state_dict(torch.load(args.load, map_location=device))
@@ -189,7 +207,8 @@ if __name__ == '__main__':
                   device=device,
                   img_scale=args.scale,
                   val_percent=args.val / 100,
-                  amp=args.amp)
+                  amp=args.amp,
+                  pretrained=args.pretrained)
     except KeyboardInterrupt:
         torch.save(net.state_dict(), 'INTERRUPTED.pth')
         logging.info('Saved interrupt')
