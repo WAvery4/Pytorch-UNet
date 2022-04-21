@@ -44,10 +44,6 @@ def train_net(net,
     n_val = int(len(dataset) * val_percent)
     n_train = len(dataset) - n_val
     train_set, val_set = random_split(dataset, [n_train, n_val], generator=torch.Generator().manual_seed(0))
-    train_set = deepcopy(train_set)
-    val_set = deepcopy(val_set)
-    train_set.dataset.augmentation = True
-    val_set.dataset.augmentation = False
 
     # 3. Create data loaders
     loader_args = dict(batch_size=batch_size, num_workers=1, pin_memory=True)
