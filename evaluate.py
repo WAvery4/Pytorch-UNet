@@ -1,11 +1,12 @@
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
+from torchvision import transforms
 
 from utils.dice_score import multiclass_dice_coeff, dice_coeff
 
 
-def evaluate(net, dataloader, device, pretrained):
+def evaluate(net, dataloader, device, pretrained, test=False):
     net.eval()
     num_val_batches = len(dataloader)
     dice_score = 0
@@ -25,6 +26,11 @@ def evaluate(net, dataloader, device, pretrained):
             # predict the mask
             mask_pred = net(image)
 
+            if test:
+                transform = transforms.ToPILImage()
+                print(mask_pred[0])
+                temp = transform(mask_pred[0]).convert('L')
+                temp.save('.\data\PREDICT\preds/' + str(batch) + '.tif')
             # convert to one-hot format
             # if net.n_classes == 1:
             #     mask_pred = (F.sigmoid(mask_pred) > 0.5).float()

@@ -16,3 +16,4 @@ venv/
 *.avi
 *.jpg
 Bentonite-Data/
+training/

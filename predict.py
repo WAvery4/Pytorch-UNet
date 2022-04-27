@@ -4,9 +4,11 @@ import os
 
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
+import segmentation_models_pytorch as smp
 
 from utils.data_loading import BasicDataset
 from unet import UNet
@@ -25,7 +27,8 @@ def predict_img(net,
     with torch.no_grad():
         output = net(img)
 
-        if net.n_classes > 1:
+        #if net.n_classes > 1:
+        if True:
             probs = F.softmax(output, dim=1)[0]
         else:
             probs = torch.sigmoid(output)[0]
@@ -38,7 +41,8 @@ def predict_img(net,
 
         full_mask = tf(probs.cpu()).squeeze()
 
-    if net.n_classes == 1:
+    #if net.n_classes == 1:
+    if True:
         return (full_mask > out_threshold).numpy()
     else:
         return F.one_hot(full_mask.argmax(dim=0), net.n_classes).permute(2, 0, 1).numpy()
@@ -82,7 +86,8 @@ if __name__ == '__main__':
     in_files = args.input
     out_files = get_output_filenames(args)
 
-    net = UNet(n_channels=3, n_classes=2, bilinear=args.bilinear)
+    #net = UNet(n_channels=3, n_classes=2, bilinear=args.bilinear)
+    net = smp.Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=2)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Loading model {args.model}')
