@@ -1,3 +1,13 @@
+# Updates to Pytorch-UNet for EE379K Computer Vision Spring 2022
+1. Modified the <a href=https://github.com/milesial/Pytorch-UNet>Pytorch-UNet</a> repo to work with out segmentation data
+2. Added limited support for using pretrained encoders using the <a href=https://github.com/qubvel/segmentation_models.pytorch>Segmentation Models Pytorch Library</a>
+3. Added testing scripts for custom testing of our image data
+
+# References
+1. <a href=https://arxiv.org/abs/1505.04597>U-Net Paper</a>
+2. <a href=https://imagej.net/software/fiji>Fiji Software for Data Cleaning</a>
+3. <a href=https://iopscience.iop.org/article/10.1088/1742-6596/1195/1/012022/meta> Related Work on Titanium Microstructures</a>
+
 # U-Net: Semantic segmentation with PyTorch
 <a href="#"><img src="https://img.shields.io/github/workflow/status/milesial/PyTorch-UNet/Publish%20Docker%20image?logo=github&style=for-the-badge" /></a>
 <a href="https://hub.docker.com/r/milesial/unet"><img src="https://img.shields.io/badge/docker%20image-available-blue?logo=Docker&style=for-the-badge" /></a>
