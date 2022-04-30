@@ -1,14 +1,27 @@
 # Updates to Pytorch-UNet for EE379K Computer Vision Spring 2022
-1. Modified the <a href=https://github.com/milesial/Pytorch-UNet>Pytorch-UNet</a> repo to work with out segmentation data
-2. Added limited support for using pretrained encoders using the <a href=https://github.com/qubvel/segmentation_models.pytorch>Segmentation Models Pytorch Library</a>
-3. Added testing scripts for custom testing of our image data
+1. Modified the <a href=https://github.com/milesial/Pytorch-UNet>Pytorch-UNet</a> repo to work with our segmentation data
+2. Added support for using pretrained encoders using the <a href=https://github.com/qubvel/segmentation_models.pytorch>Segmentation Models Pytorch Library</a>
+3. Added test.py and modified codebase for custom testing of our image data
+
+# Results
+For training, run the following command on the Bentonite data located <a href=https://github.com/WAvery4/Bentonite-Data>here</a>:
+
+`train.py -e=200 -v=5.00 -b=1 --scale=1 --pretrained`
+
+The new pretrained flag we added will use a pretrained encoder, which can be specified in train.py. By default, the pretrained encoder will be VGG19_BN, 
+since it obtained the best test results.
+| Encoder         | Dice Score    |
+| --------------- |:-------------:|
+| VGG19_BN        | 0.7341        |
+| ResNet-50       | 0.7014        |
+| EfficientNet_B5 | 0.6631        |
 
 # References
 1. <a href=https://arxiv.org/abs/1505.04597>U-Net Paper</a>
 2. <a href=https://imagej.net/software/fiji>Fiji Software for Data Cleaning</a>
 3. <a href=https://iopscience.iop.org/article/10.1088/1742-6596/1195/1/012022/meta> Related Work on Titanium Microstructures</a>
 
-# U-Net: Semantic segmentation with PyTorch
+# The README for the base U-Net architecture we built on begins here
 <a href="#"><img src="https://img.shields.io/github/workflow/status/milesial/PyTorch-UNet/Publish%20Docker%20image?logo=github&style=for-the-badge" /></a>
 <a href="https://hub.docker.com/r/milesial/unet"><img src="https://img.shields.io/badge/docker%20image-available-blue?logo=Docker&style=for-the-badge" /></a>
 <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-v1.9.0-red.svg?logo=PyTorch&style=for-the-badge" /></a>
