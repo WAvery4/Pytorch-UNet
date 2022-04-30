@@ -10,8 +10,8 @@ from torch.utils.data import DataLoader
 from evaluate import evaluate
 
 # Load Model
-net = smp.Unet(encoder_name='resnet50', encoder_weights='imagenet', in_channels=3, classes=2)
-net.load_state_dict(torch.load('resnet-50.pth'))
+net = smp.Unet(encoder_name='vgg19_bn', encoder_weights='imagenet', in_channels=3, classes=2)
+net.load_state_dict(torch.load('vgg19_bn.pth'))
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 net.to(device)
 
